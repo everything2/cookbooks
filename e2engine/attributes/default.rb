@@ -1,4 +1,5 @@
 default["e2engine"]["gitrepo"]      = "git://github.com/everything2/everything2.git"
+default["e2engine"]["s3host"]       = "s3-us-west-2.amazonaws.com"
 default["e2engine"]["maintenance_mode"] = 0
 default["e2engine"]["everyuser"]    = "everyuser"
 default["e2engine"]["everypass"]    = ""
@@ -46,6 +47,7 @@ default["e2engine"]["s3"]["sitemap"]["access_key_id"] = ""
 default["e2engine"]["s3"]["jscss"]["bucket"] = ""
 default["e2engine"]["s3"]["jscss"]["secret_access_key"] = ""
 default["e2engine"]["s3"]["jscss"]["access_key_id"] = ""
+default["e2engine"]["s3"]["jscss"]["host"] = "s3.amazonaws.com"
 default["e2engine"]["guest_user"] = 779713
 default["e2engine"]["site_url"] = 'http://everything2.com'
 default["e2engine"]["system"] = {}
