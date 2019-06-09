@@ -222,7 +222,6 @@ end
 
 if node['environment'].eql? 'production'
   Chef::Log.info('In production, doing instance registrations')
-else
 
   Chef::Log.info('Setting up ingress to production DB')
   begin
