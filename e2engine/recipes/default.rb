@@ -173,7 +173,7 @@ file '/etc/everything/everything.conf.json' do
   mode "0755"
 end
 
-if node['environment'].eql? 'production'
+if node['e2engine']['environment'].eql? 'production'
   Chef::Log.info('In production, doing instance registrations')
   Chef::Log.info('Setting up ingress to production DB')
 
