@@ -81,8 +81,9 @@ to_install.each do |p|
   package p
 end
 
-chef_gem 'aws-sdk' do
+gem_package 'aws-sdk' do
   timeout 240
+  retries 3
 end
 
 git everythingdir do
@@ -172,71 +173,13 @@ file '/etc/everything/everything.conf.json' do
   mode "0755"
 end
 
-# Amazon-specific config
-require 'aws-sdk'
-
-@instance_server='http://169.254.169.254/latest'
-
-def query_metadata(value)
-  Net::HTTP.get(URI("#{@instance_server}/#{value}"))
-end
-
-def instance_identity
-  JSON.parse(query_metadata('dynamic/instance-identity/document'))
-end
-
-def instance_region
-  instance_identity['region']
-end
-
-@rds = Aws::RDS::Client.new(region: instance_region)
-@elb = Aws::ElasticLoadBalancingV2::Client.new(region: instance_region)
-
-def instance_id
-  instance_identity['instanceId']
-end
-
-def mac_address
-  query_metadata('meta-data/network/interfaces/macs/').split("\n")[0].gsub!(%r{/$},'')
-end
-
-def public_address
-  query_metadata("meta-data/network/interfaces/macs/#{mac_address}/public-ipv4s").split("\n")[0]
-end
-
-def frontend_elb
-  @elb.describe_load_balancers.load_balancers.each do |elb|
-    @elb.describe_tags(resource_arns: [elb['load_balancer_arn']]).tag_descriptions[0]['tags'].each do |tag|
-      return elb if tag['key'].eql? 'app' and tag['value'].eql? 'e2'
-    end
-  end
-  nil
-end
-
-def web_cluster_target_group
-  @elb.describe_target_groups.target_groups.each do |tg|
-    return tg if tg['protocol'].eql? 'HTTPS' and tg['load_balancer_arns'].include?(frontend_elb['load_balancer_arn'])
-  end
-  nil
-end
-
 if node['environment'].eql? 'production'
   Chef::Log.info('In production, doing instance registrations')
-
   Chef::Log.info('Setting up ingress to production DB')
-  begin
-    @rds.authorize_db_security_group_ingress(db_security_group_name: 'default', cidrip: "#{public_address}/32")
-  rescue Aws::RDS::Errors::AuthorizationAlreadyExists
-  end
 
-  Chef::Log.info("Run list: #{node.run_list.join(',')}")
-  if node.run_list?('recipe[e2web]')
-    Chef::Log.info("Registering web to target")
-    @elb.register_targets(target_group_arn: web_cluster_target_group['target_group_arn'], targets: [{id: instance_id}]) 
-  else
-    Chef::Log.info("Not a webhead, not registering to target")
+  bash "AWS: Register instance with db security group" do
+    code "/var/everything/tools/aws_registration.rb --db"
   end
-
 else
   Chef::Log.info('Not in production, not doing instance registrations')
 end
