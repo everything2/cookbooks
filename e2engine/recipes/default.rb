@@ -81,7 +81,7 @@ to_install.each do |p|
   package p
 end
 
-gem_package 'aws-sdk' do
+chef_gem 'aws-sdk' do
   timeout 240
 end
 
